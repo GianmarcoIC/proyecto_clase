@@ -6,6 +6,8 @@ SUPABASE_URL = "https://peioqwvlxrgujotcuazt.supabase.co"
 SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlaW9xd3ZseHJndWpvdGN1YXp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjQwMzM0MDUsImV4cCI6MjAzOTYwOTQwNX0.fLmClBVIcVGr_iKYTw79kPJUb12Iem7beooWfesNiXE"
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+
 def get_students():
     response = supabase.table('students').select('*').execute()
     return response.data
@@ -22,20 +24,52 @@ def update_student(student_id, name, age):
 
 def delete_student(student_id):
     supabase.table('students').delete().eq("id", student_id).execute()
-    
-st.image("log_ic-removebg-preview.png", width=150)
-st.title("Proyecto Prodcutivo IDL3")
+
+st.image("log_ic-removebg-preview.png", width=200)
+st.title("CRUD Python - Instituto Continental IDL3")
 
 menu = ["Ver", "Agregar", "Actualizar", "Eliminar"]
 choice = st.sidebar.selectbox("Menú", menu)
 
+
+def paginate_dataframe(df, page_size):
+    """Divide el DataFrame en páginas de un tamaño dado."""
+    num_pages = (len(df) + page_size - 1) // page_size
+    for page in range(num_pages):
+        start_idx = page * page_size
+        end_idx = min((page + 1) * page_size, len(df))
+        yield df.iloc[start_idx:end_idx]
+
 if choice == "Ver":
     st.subheader("Lista de estudiantes")
+    
+    # Obtener los datos de los estudiantes
     students = get_students()
     student_count = count_students()
+    
+    # Mostrar la cantidad total de estudiantes
     st.write(f"Cantidad total de estudiantes: {student_count}")
-    for student in students:
-        st.write(f"ID: {student['id']}, Nombre: {student['name']}, Edad: {student['age']}")
+    
+    # Convertir la lista de estudiantes en un DataFrame de pandas
+    df_students = pd.DataFrame(students)
+    
+    # Tamaño de página
+    page_size = 5
+    
+    # Crear la numeración personalizada
+    df_students['#'] = df_students.index + 1
+    
+    # Calcular número de páginas
+    num_pages = (len(df_students) + page_size - 1) // page_size
+    
+    # Selección de página
+    page_number = st.number_input("Selecciona la página:", min_value=1, max_value=num_pages, value=1)
+    
+    # Mostrar la página seleccionada
+    for page_df in paginate_dataframe(df_students, page_size):
+        if page_number == (df_students.index[page_df.index[-1]] // page_size + 1):
+            st.dataframe(page_df[['#', 'id', 'name', 'age']])
+            st.write(f"Página {page_number} de {num_pages}")
 
 elif choice == "Agregar":
     st.subheader("Agregar Estudiante")
