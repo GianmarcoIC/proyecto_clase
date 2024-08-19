@@ -1,5 +1,4 @@
 import streamlit as st
-import pandas as pd  # Asegúrate de importar pandas
 from supabase import create_client
 
 #Configurar Supabase
