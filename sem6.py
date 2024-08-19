@@ -1,61 +1,76 @@
-﻿
 import streamlit as st
 from supabase import create_client, Client
-#Configurar Supabase
-SUPABASE_URL = "https://qiqsnhyrxcpvgixhaflc.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFpcXNuaHlyeGNwdmdpeGhhZmxjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjQwMzc2MTEsImV4cCI6MjAzOTYxMzYxMX0.R56vSvWVSvxkRQoqV-YteEuxxPOFD2hy5yO-8OwC0bY"
-supabase: Client = create_client (SUPABASE_URL, SUPABASE_KEY)
-# Crear cliente de Supabase
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+# Configurar Supabase
+SUPABASE_URL = "https://xhnskoldrpeslxhbyami.supabase.co"
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlaW9xd3ZseHJndWpvdGN1YXp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjQwMzM0MDUsImV4cCI6MjAzOTYwOTQwNX0.fLmClBVIcVGr_iKYTw79kPJUb12Iem7beooWfesNiXE"
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # Funciones CRUD
 def get_students():
-    try:
-        response = supabase.table('students').select('*').execute()
-        return response.data
-    except Exception as e:
-        st.error(f"Error al obtener estudiantes: {e}")
-        return []
+    response = supabase.table('students').select('*').execute()
+    return response.data
 
 def count_students():
-    try:
-        response = supabase.table('students').select('*', count='exact').execute()
-        return response.count
-    except Exception as e:
-        st.error(f"Error al contar estudiantes: {e}")
-        return 0
+    response = supabase.table('students').select('*', count='exact').execute()
+    return response.count
 
 def add_student(name, age):
-    try:
-        supabase.table('students').insert({"name": name, "age": age}).execute()
-    except Exception as e:
-        st.error(f"Error al agregar estudiante: {e}")
+    supabase.table('students').insert({"name": name, "age": age}).execute()
 
 def update_student(student_id, name, age):
-    try:
-        supabase.table('students').update({"name": name, "age": age}).eq("id", student_id).execute()
-    except Exception as e:
-        st.error(f"Error al actualizar estudiante: {e}")
+    supabase.table('students').update({"name": name, "age": age}).eq("id", student_id).execute()
 
 def delete_student(student_id):
-    try:
-        supabase.table('students').delete().eq("id", student_id).execute()
-    except Exception as e:
-        st.error(f"Error al eliminar estudiante: {e}")
+    supabase.table('students').delete().eq("id", student_id).execute()
 
-# Interfaz de usuario con Streamlit
+# Interfaz de usuario con Streamlit y Bootstrap
+st.markdown('''
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .navbar {
+            background-color: #C70039;
+        }
+        .sidebar .sidebar-content {
+            background-color: #C70039;
+            color: white;
+        }
+        .main {
+            padding: 20px;
+        }
+        .main h1 {
+            color: #C70039;
+        }
+        .btn-primary {
+            background-color: #C70039;
+            border-color: #C70039;
+        }
+    </style>
+''', unsafe_allow_html=True)
+
 st.title("CRUD con Streamlit y Supabase")
 
 menu = ["Ver", "Agregar", "Actualizar", "Eliminar"]
-choice = st.sidebar.selectbox("Menú", menu)
+choice = st.sidebar.selectbox("Menu", menu)
 
 if choice == "Ver":
     st.subheader("Lista de estudiantes")
     students = get_students()
-    student_count = count_students()
-    st.write(f"Cantidad total de estudiantes: {student_count}")
-    for student in students:
-        st.write(f"ID: {student['id']}, Nombre: {student['name']}, Edad: {student['age']}")
+
+    # Convertir la lista de estudiantes a un DataFrame para usar con Streamlit
+    df = pd.DataFrame(students)
+
+    # Paginación
+    items_per_page = 10
+    total_students = len(df)
+    total_pages = total_students // items_per_page + (1 if total_students % items_per_page > 0 else 0)
+
+    page = st.number_input('Página', min_value=1, max_value=total_pages, step=1)
+    start_idx = (page - 1) * items_per_page
+    end_idx = start_idx + items_per_page
+    df_page = df.iloc[start_idx:end_idx]
+
+    st.table(df_page)
 
 elif choice == "Agregar":
     st.subheader("Agregar Estudiante")
