@@ -10,7 +10,7 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 # Funciones CRUD
 def get_students():
     response = supabase.table('students').select('*').execute()
-    return response.data if response.data else []
+    return response.data
 
 def count_students():
     response = supabase.table('students').select('*', count='exact').execute()
@@ -25,30 +25,7 @@ def update_student(student_id, name, age):
 def delete_student(student_id):
     supabase.table('students').delete().eq("id", student_id).execute()
 
-# Interfaz de usuario con Streamlit y Bootstrap
-st.markdown('''
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        .navbar {
-            background-color: #C70039;
-        }
-        .sidebar .sidebar-content {
-            background-color: #C70039;
-            color: white;
-        }
-        .main {
-            padding: 20px;
-        }
-        .main h1 {
-            color: #C70039;
-        }
-        .btn-primary {
-            background-color: #C70039;
-            border-color: #C70039;
-        }
-    </style>
-''', unsafe_allow_html=True)
-
+# Interfaz de usuario con Streamlit
 st.title("CRUD con Streamlit y Supabase")
 
 menu = ["Ver", "Agregar", "Actualizar", "Eliminar"]
@@ -57,25 +34,10 @@ choice = st.sidebar.selectbox("Menu", menu)
 if choice == "Ver":
     st.subheader("Lista de estudiantes")
     students = get_students()
-
-    # Verifica si students no está vacío y contiene datos
-    if students and isinstance(students, list) and isinstance(students[0], dict):
-        # Convertir la lista de estudiantes a un DataFrame para usar con Streamlit
-        df = pd.DataFrame(students)
-
-        # Paginación
-        items_per_page = 10
-        total_students = len(df)
-        total_pages = total_students // items_per_page + (1 if total_students % items_per_page > 0 else 0)
-
-        page = st.number_input('Página', min_value=1, max_value=total_pages, step=1)
-        start_idx = (page - 1) * items_per_page
-        end_idx = start_idx + items_per_page
-        df_page = df.iloc[start_idx:end_idx]
-
-        st.table(df_page)
-    else:
-        st.write("No hay estudiantes para mostrar.")
+    student_count = count_students()
+    st.write(f"Cantidad total de estudiantes: {student_count}")
+    for student in students:
+        st.write(f"ID: {student['id']}, Nombre: {student['name']}, Edad: {student['age']}")
 
 elif choice == "Agregar":
     st.subheader("Agregar Estudiante")
