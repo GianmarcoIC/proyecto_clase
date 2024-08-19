@@ -8,7 +8,7 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 # Funciones CRUD
 def get_students():
     response = supabase.table('students').select('*').execute()
-    return response.data
+    return response.data if response.data else []
 
 def count_students():
     response = supabase.table('students').select('*', count='exact').execute()
@@ -56,20 +56,24 @@ if choice == "Ver":
     st.subheader("Lista de estudiantes")
     students = get_students()
 
-    # Convertir la lista de estudiantes a un DataFrame para usar con Streamlit
-    df = pd.DataFrame(students)
+    # Verifica si students no está vacío y contiene datos
+    if students and isinstance(students, list) and isinstance(students[0], dict):
+        # Convertir la lista de estudiantes a un DataFrame para usar con Streamlit
+        df = pd.DataFrame(students)
 
-    # Paginación
-    items_per_page = 10
-    total_students = len(df)
-    total_pages = total_students // items_per_page + (1 if total_students % items_per_page > 0 else 0)
+        # Paginación
+        items_per_page = 10
+        total_students = len(df)
+        total_pages = total_students // items_per_page + (1 if total_students % items_per_page > 0 else 0)
 
-    page = st.number_input('Página', min_value=1, max_value=total_pages, step=1)
-    start_idx = (page - 1) * items_per_page
-    end_idx = start_idx + items_per_page
-    df_page = df.iloc[start_idx:end_idx]
+        page = st.number_input('Página', min_value=1, max_value=total_pages, step=1)
+        start_idx = (page - 1) * items_per_page
+        end_idx = start_idx + items_per_page
+        df_page = df.iloc[start_idx:end_idx]
 
-    st.table(df_page)
+        st.table(df_page)
+    else:
+        st.write("No hay estudiantes para mostrar.")
 
 elif choice == "Agregar":
     st.subheader("Agregar Estudiante")
